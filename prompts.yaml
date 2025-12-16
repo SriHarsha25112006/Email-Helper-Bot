@@ -1,0 +1,12 @@
+shorten:
+  user: |
+    Rewrite the following paragraph to be more concise while preserving its meaning:
+    {selected_text}
+lengthen:
+  user: |
+    Expand the following paragraph with additional detail while keeping the same intent:
+    {selected_text}
+tone:
+  user: |
+    Rewrite the following paragraph in a {tone_type} tone while keeping the same meaning:
+    {selected_text}
