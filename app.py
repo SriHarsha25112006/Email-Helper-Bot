@@ -4,20 +4,17 @@ import os
 from dotenv import load_dotenv
 from generate import GenerateEmail
 
-# Load environment variables from .env file
 load_dotenv()
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="AI Email Editor", page_icon="📧", layout="wide")
 
-# Deployment name is pulled from .env for security
 MODEL_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4.1") 
 generator = GenerateEmail(model=MODEL_NAME)
 
 # ---------------- DATA LOADING ----------------
 @st.cache_data
 def load_emails_from_jsonl(file_path):
-    # Check root and datasets folder
     if os.path.exists(file_path):
         path = file_path
     elif os.path.exists(f"datasets/{file_path}"):
@@ -42,7 +39,6 @@ data_files = {
     "tone": load_emails_from_jsonl("tone.jsonl"),
 }
 
-# ---------------- SIDEBAR ----------------
 action = st.sidebar.selectbox("1. Select Action", ["shorten", "lengthen", "tone"])
 
 email_ids = data_files[action]["ids"]
@@ -57,7 +53,6 @@ email = emails[email_id]
 original_body = email.get("content", "")
 
 # ---------------- SESSION KEYS ----------------
-# Unique keys for each email/action to prevent state bleed
 body_key = f"body_{action}_{email_id}"
 orig_key = f"orig_{action}_{email_id}"
 
@@ -73,7 +68,7 @@ st.markdown(f"**From:** {email.get('sender', '-')}")
 st.markdown(f"**Subject:** {email.get('subject', '-')}")
 st.divider()
 
-st.markdown("### ✏️ Email Body (Editable)")
+st.markdown("### ✏️ Email Body")
 st.text_area(label="Edit text below:", height=250, key=body_key)
 
 # ---------------- CALLBACKS ----------------
@@ -81,8 +76,6 @@ def run_ai(action_type, tone=None):
     content = st.session_state[body_key].strip()
     if not content:
         return
-
-    # Call the generator logic
     if action_type == "tone":
         result = generator.generate("tone", content, tone_type=tone)
     else:

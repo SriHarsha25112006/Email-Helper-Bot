@@ -1,12 +1,10 @@
 import os
 import yaml
 from dotenv import load_dotenv
-from openai import AzureOpenAI # Using specialized Azure client
+from openai import AzureOpenAI
 
-# Load keys from .env
 load_dotenv()
 
-# Load prompts from YAML
 try:
     with open("prompts.yaml", "r", encoding="utf-8") as f:
         prompts = yaml.safe_load(f)
@@ -15,7 +13,6 @@ except FileNotFoundError:
 
 class GenerateEmail:
     def __init__(self, model: str):
-        # Initialize client with variables from .env
         self.client = AzureOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             api_key=os.getenv("AZURE_OPENAI_KEY"),
@@ -28,7 +25,7 @@ class GenerateEmail:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.7, # Higher temperature allows for creative lengthening
+                temperature=0.4,
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -40,16 +37,12 @@ class GenerateEmail:
 
     @staticmethod
     def _clean_body(text: str) -> str:
-        """
-        Removes subject lines and standalone greetings/signatures.
-        """
         banned_starts = ("subject:", "dear", "regards:", "sincerely,", "best,")
         lines = text.splitlines()
         cleaned = []
         
         for line in lines:
             low_line = line.lower().strip()
-            # Only remove the line if it starts with a banned word and is short
             if len(low_line.split()) < 4 and low_line.startswith(banned_starts):
                 continue
             cleaned.append(line)
@@ -62,8 +55,6 @@ class GenerateEmail:
             "selected_text": selected_text,
             "tone_type": tone_type,
         }
-
-        # Hard guardrails to prevent conversational filler
         system_prompt = (
             "You are a professional writing assistant.\n"
             "Rules:\n"
@@ -72,18 +63,14 @@ class GenerateEmail:
             "- Do NOT provide explanations or conversational filler.\n"
             "- Return plain text only."
         )
-
-        # Focus the model on content by avoiding the word 'email'
         user_prompt = (
             self.get_prompt(action, "user", **args)
             .replace("email", "paragraph")
             .replace("Email", "paragraph")
         )
-
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ]
-
         raw_output = self._call_api(messages)
         return self._clean_body(raw_output)
