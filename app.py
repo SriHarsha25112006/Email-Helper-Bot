@@ -66,6 +66,7 @@ if orig_key not in st.session_state:
 st.markdown("## 📧 Email Details")
 st.markdown(f"**From:** {email.get('sender', '-')}")
 st.markdown(f"**Subject:** {email.get('subject', '-')}")
+
 st.divider()
 
 st.markdown("### ✏️ Email Body")
@@ -91,16 +92,23 @@ def reset_body():
 
 # ---------------- BUTTONS ----------------
 st.markdown("### ✨ Actions")
-col1, col2 = st.columns([1, 4])
+
+# Create three columns for the three main actions
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    if action == "shorten":
-        st.button("⚡ Shorten", on_click=run_ai, args=("shorten",))
-    elif action == "lengthen":
-        st.button("📝 Lengthen", on_click=run_ai, args=("lengthen",))
-    elif action == "tone":
-        tone_choice = st.selectbox("Tone", ["Friendly", "Sympathetic", "Professional"])
-        st.button("🎭 Apply Tone", on_click=run_ai, args=("tone", tone_choice))
+    st.button("⚡ Shorten", on_click=run_ai, args=("shorten",), use_container_width=True)
 
 with col2:
-    st.button("🔄 Reset to Original", on_click=reset_body)
+    st.button("📝 Lengthen", on_click=run_ai, args=("lengthen",), use_container_width=True)
+
+with col3:
+    # Keep the tone selector above its specific button
+    tone_choice = st.selectbox("Select Tone Style", ["Friendly", "Sympathetic", "Professional"], label_visibility="collapsed")
+    st.button("🎭 Apply Tone", on_click=run_ai, args=("tone", tone_choice), use_container_width=True)
+
+st.divider()
+
+# Reset button centered below the main actions
+if st.button("🔄 Reset to Original Content", on_click=reset_body):
+    st.info("Content restored to original state.")
