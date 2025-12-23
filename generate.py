@@ -5,6 +5,7 @@ from openai import AzureOpenAI
 
 load_dotenv()
 
+# Load prompts
 try:
     with open("prompts.yaml", "r", encoding="utf-8") as f:
         prompts = yaml.safe_load(f)
@@ -12,13 +13,13 @@ except FileNotFoundError:
     prompts = {}
 
 class GenerateEmail:
-    def __init__(self, model: str):
+    def __init__(self, deployment_name):
+        # We use AzureOpenAI because your key is an Azure key.
+        # It automatically picks up AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT from .env
         self.client = AzureOpenAI(
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_key=os.getenv("AZURE_OPENAI_KEY"),
-            api_version="2024-02-01" 
+            api_version="2024-02-01"
         )
-        self.model = model
+        self.model = deployment_name
 
     def _call_api(self, messages):
         try:
@@ -40,37 +41,45 @@ class GenerateEmail:
         banned_starts = ("subject:", "dear", "regards:", "sincerely,", "best,")
         lines = text.splitlines()
         cleaned = []
-        
         for line in lines:
             low_line = line.lower().strip()
             if len(low_line.split()) < 4 and low_line.startswith(banned_starts):
                 continue
             cleaned.append(line)
-
         result = "\n".join(cleaned).strip()
         return result if result else text
 
     def generate(self, action: str, selected_text: str, tone_type: str = "Professional") -> str:
-        args = {
-            "selected_text": selected_text,
-            "tone_type": tone_type,
-        }
+        args = {"selected_text": selected_text, "tone_type": tone_type}
+        user_prompt_template = self.get_prompt(action, "user", **args)
+        
+        if not user_prompt_template:
+            return "Error: Prompt template not found."
+
         system_prompt = (
             "You are a professional writing assistant.\n"
             "Rules:\n"
             "- Output ONLY the rewritten paragraph content.\n"
-            "- Do NOT include subject lines, greetings, or signatures.\n"
-            "- Do NOT provide explanations or conversational filler.\n"
             "- Return plain text only."
         )
-        user_prompt = (
-            self.get_prompt(action, "user", **args)
-            .replace("email", "paragraph")
-            .replace("Email", "paragraph")
-        )
+        user_prompt = user_prompt_template.replace("email", "paragraph")
+        
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ]
-        raw_output = self._call_api(messages)
-        return self._clean_body(raw_output)
+        return self._clean_body(self._call_api(messages))
+
+    def evaluate(self, metric: str, original_text: str, rewritten_text: str) -> str:
+        args = {"original_text": original_text, "rewritten_text": rewritten_text}
+        system_prompt = "You are an AI quality judge. Evaluate the text objectively."
+        user_prompt = self.get_prompt(metric, "user", **args)
+        
+        if not user_prompt:
+            return "Error: Metric prompt not found."
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        return self._call_api(messages)
