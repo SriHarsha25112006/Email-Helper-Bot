@@ -17,27 +17,42 @@ judge_bot = GenerateEmail(deployment_name=os.getenv("JUDGE_DEPLOYMENT", "gpt-4.1
 
 # ---------------- DATA LOADING ----------------
 @st.cache_data
-def load_emails_from_jsonl(file_path):
-    paths = [file_path, f"datasets/{file_path}"]
-    path = next((p for p in paths if os.path.exists(p)), None)
-    if not path:
+def load_emails_from_jsonl(*file_names):
+    """
+    Loads emails from multiple JSONL files and merges them.
+    Re-assigns IDs to ensure uniqueness across files.
+    """
+    data = []
+    
+    for file_name in file_names:
+        paths = [file_name, f"datasets/{file_name}"]
+        path = next((p for p in paths if os.path.exists(p)), None)
+        
+        if path:
+            with open(path, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        data.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+
+    if not data:
         return {"emails": {}, "ids": []}
 
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                data.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-    emails = {item["id"]: item for item in data}
+    # Re-index emails to avoid ID collisions
+    emails = {}
+    for idx, item in enumerate(data):
+        new_id = idx + 1
+        item["id"] = new_id
+        emails[new_id] = item
+        
     return {"emails": emails, "ids": list(emails.keys())}
 
 
 data_files = {
-    "shorten": load_emails_from_jsonl("shorten.jsonl"),
-    "lengthen": load_emails_from_jsonl("lengthen.jsonl"),
-    "tone": load_emails_from_jsonl("tone.jsonl"),
+    "shorten": load_emails_from_jsonl("shorten.jsonl", "short.jsonl"),
+    "lengthen": load_emails_from_jsonl("lengthen.jsonl", "long.jsonl"),
+    "tone": load_emails_from_jsonl("tone.jsonl", "toned.jsonl"),
 }
 
 # ---------------- SIDEBAR ----------------
@@ -51,8 +66,9 @@ selected_label = st.sidebar.selectbox("1. Select Action", list(action_map.keys()
 action = action_map[selected_label]
 
 email_ids = data_files[action]["ids"]
+
 if not email_ids:
-    st.error(f"Error: {action}.jsonl not found.")
+    st.error(f"Error: No data found for '{action}'. Run generate.py first.")
     st.stop()
 
 email_id = st.sidebar.selectbox("2. Select Email ID", email_ids)
@@ -72,8 +88,8 @@ if metrics_key not in st.session_state:
 
 # ---------------- UI LAYOUT ----------------
 st.markdown("### 📧 Email Details")
-st.markdown(f"**From:** {email.get('sender', '-')}")
-st.markdown(f"**Subject:** {email.get('subject', '-')}")
+st.markdown(f"**From:** {email.get('sender', 'Unknown Sender')}")
+st.markdown(f"**Subject:** {email.get('subject', 'No Subject')}")
 st.markdown("---")
 
 st.markdown("### ✏️ Email Body")

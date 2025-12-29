@@ -1,15 +1,34 @@
 shorten:
   user: |
-    Rewrite the following paragraph to be more concise while preserving its meaning:
+    Rewrite the following text to be more concise.
+    
+    CRITICAL RULES:
+    1. Preserve the core meaning.
+    2. Do not lose key details (dates, names, action items).
+    3. Simply remove fluff and redundancy.
+    4. If the text is already very short, just return it as is or make minor grammatical tightenings.
+    
+    Original Text:
     {selected_text}
+
 lengthen:
   user: |
-    Expand the following paragraph with additional detail while keeping the same intent:
+    Rewrite the following text to be more polite and professional, slightly expanding it for clarity.
+    
+    CRITICAL RULES:
+    1. Do NOT add specific facts (like project names, meetings, deadlines, or teams) that are not in the original text.
+    2. Do NOT invent scenarios or background stories.
+    3. You may add professional pleasantries (e.g., "I hope this finds you well", "Thank you for your patience") but nothing else.
+    4. Keep the expansion reasonable (max 20-30% longer than original). Do not turn 1 sentence into a paragraph.
+    
+    Original Text:
     {selected_text}
+
 tone:
   user: |
     Rewrite the following paragraph in a {tone_type} tone while keeping the same meaning:
     {selected_text}
+
 faithfulness:
   user: |
     You are an evaluator. Rate the FAITHFULNESS of the rewritten text to the original text.
@@ -23,6 +42,7 @@ faithfulness:
     
     Start your response with the score in bold.
     Format: "**Score: X/5** - [Explanation]"
+
 completeness:
   user: |
     You are an evaluator. Rate the COMPLETENESS of the rewritten text compared to the original.
@@ -36,3 +56,9 @@ completeness:
     
     Start your response with the score in bold.
     Format: "**Score: X/5** - [Explanation]"
+
+data_synthesis:
+  user: |
+    Write a professional email about {topic} written by {persona} in {tone}. The email should be {length}.
+    Only Output a JSON in the following format:
+    {{"id": {id_num}, "subject": "<short subject description>", "content": "<content of email>"}}
