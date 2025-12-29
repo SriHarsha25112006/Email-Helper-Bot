@@ -14,8 +14,6 @@ except FileNotFoundError:
 
 class GenerateEmail:
     def __init__(self, deployment_name):
-        # We use AzureOpenAI because your key is an Azure key.
-        # It automatically picks up AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT from .env
         self.client = AzureOpenAI(
             api_version="2024-02-01"
         )

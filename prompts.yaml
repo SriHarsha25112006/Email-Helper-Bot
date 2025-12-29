@@ -10,8 +10,6 @@ tone:
   user: |
     Rewrite the following paragraph in a {tone_type} tone while keeping the same meaning:
     {selected_text}
-
-# --- JUDGE PROMPTS ---
 faithfulness:
   user: |
     You are an evaluator. Rate the FAITHFULNESS of the rewritten text to the original text.
@@ -25,7 +23,6 @@ faithfulness:
     
     Start your response with the score in bold.
     Format: "**Score: X/5** - [Explanation]"
-
 completeness:
   user: |
     You are an evaluator. Rate the COMPLETENESS of the rewritten text compared to the original.
