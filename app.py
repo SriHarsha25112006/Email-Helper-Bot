@@ -53,13 +53,11 @@ selected_filename = None
 
 if source_category == "Original Datasets":
     st.sidebar.markdown("### 📂 Original Files")
-    
     file_map = {
         "Short Mails": "shorten.jsonl",
         "Long Mails": "lengthen.jsonl",
         "Tone Mails": "tone.jsonl"
     }
-    
     friendly_name = st.sidebar.selectbox("Select File", list(file_map.keys()))
     selected_filename = file_map[friendly_name]
 
@@ -76,8 +74,9 @@ elif source_category == "Generated Mails":
     
     raw_generated_files = [f for f in all_filenames if f not in excluded_files]
 
-    if "mixed.jsonl" in all_filenames and "mixed.jsonl" not in raw_generated_files:
-        raw_generated_files.append("mixed.jsonl")
+    for req_file in ["mixed.jsonl", "challenge.jsonl"]:
+        if req_file in all_filenames and req_file not in raw_generated_files:
+            raw_generated_files.append(req_file)
 
     if not raw_generated_files:
         st.sidebar.warning("No generated files found. Run generate.py.")
@@ -86,6 +85,8 @@ elif source_category == "Generated Mails":
         for f in raw_generated_files:
             if f == "mixed.jsonl":
                 display_map["Mixed Mails"] = f
+            elif f == "challenge.jsonl":
+                display_map["⚠️ Challenge (URLs)"] = f
             else:
                 display_map[f] = f
         
@@ -113,11 +114,14 @@ body_key = f"body_{state_id}"
 orig_key = f"orig_{state_id}"
 metrics_key = f"metrics_{state_id}"
 
+# Expanded metrics structure
 default_metrics = {
     "faithfulness": None, 
     "completeness": None, 
     "robustness": None, 
-    "professionalism": None
+    "professionalism": None,
+    "url_preservation": None,
+    "scope_accuracy": None
 }
 
 if body_key not in st.session_state:
@@ -166,11 +170,14 @@ def run_judge():
         st.warning("You haven't modified the email.")
         return
 
-    metric_names = ["faithfulness", "completeness", "robustness", "professionalism"]
+    metric_names = [
+        "faithfulness", "completeness", "robustness", 
+        "professionalism", "url_preservation", "scope_accuracy"
+    ]
     results = {}
 
-    with st.spinner("Judging Metrics (Parallel)..."):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+    with st.spinner("Judging Metrics (Running 6 Evaluators)..."):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             future_to_metric = {
                 executor.submit(judge_bot.evaluate, m, original, current): m 
                 for m in metric_names
@@ -207,12 +214,17 @@ if st.button("⚖️ Judge Email", on_click=run_judge, use_container_width=True,
 metrics = st.session_state[metrics_key]
 
 if any(metrics.values()):
-    st.markdown("#### ⚖️ Judge Metrics")
+    st.markdown("#### ⚖️ General Metrics")
     m1, m2, m3, m4 = st.columns(4)
     with m1: st.info(f"**Faithfulness**\n\n{metrics['faithfulness']}")
     with m2: st.info(f"**Completeness**\n\n{metrics['completeness']}")
     with m3: st.info(f"**Robustness**\n\n{metrics['robustness']}")
     with m4: st.info(f"**Professionalism**\n\n{metrics['professionalism']}")
+    
+    st.markdown("#### 🚀 Enterprise Challenge Metrics")
+    m5, m6 = st.columns(2)
+    with m5: st.error(f"**URL Preservation (Defect Check)**\n\n{metrics['url_preservation']}")
+    with m6: st.warning(f"**Scope Accuracy (Selection Check)**\n\n{metrics['scope_accuracy']}")
 
 st.divider()
 if st.button("🔄 Reset to Original Content", on_click=reset):

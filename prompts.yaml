@@ -81,8 +81,47 @@ professionalism:
     Start your response with the score in bold.
     Format: "**Score: X/5** - [Explanation]"
 
+url_preservation:
+  user: |
+    You are an evaluator checking for a specific defect: BROKEN OR MISSING URLS.
+    Check if EVERY URL (link starting with http/https/www) present in the Original Text is also present in the Rewritten Text.
+    
+    Original Text:
+    {original_text}
+    
+    Rewritten Text:
+    {rewritten_text}
+    
+    If ALL URLs are preserved exactly, give 5/5.
+    If ANY URL is missing or broken, give 1/5.
+    
+    Start your response with the score in bold.
+    Format: "**Score: X/5** - [Explanation]"
+
+scope_accuracy:
+  user: |
+    You are an evaluator checking for "Scope Creep".
+    Did the rewritten text change the ENTIRE email when it should have only focused on a specific part?
+    (For this evaluation, assume the user wanted the whole text rewritten, but check if the model unnecessarily hallucinated new topics).
+    
+    Original Text:
+    {original_text}
+    
+    Rewritten Text:
+    {rewritten_text}
+    
+    Start your response with the score in bold.
+    Format: "**Score: X/5** - [Explanation]"
+
 data_synthesis:
   user: |
     Write a professional email about {topic} written by {persona} in {tone}. The email should be {length}.
+    Only Output a JSON in the following format:
+    {{"id": {id_num}, "subject": "<short subject description>", "content": "<content of email>"}}
+
+challenge_synthesis:
+  user: |
+    Write an email about {topic} that includes at least ONE specific URL (e.g., https://docs.google.com/..., https://jira.corp/..., or a zoom link).
+    The email should be {length}.
     Only Output a JSON in the following format:
     {{"id": {id_num}, "subject": "<short subject description>", "content": "<content of email>"}}

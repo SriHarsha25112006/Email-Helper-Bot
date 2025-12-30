@@ -95,15 +95,17 @@ class GenerateEmail:
         ]
         return self._call_api(messages)
 
-    def synthesize_data(self, topic, persona, tone, length, id_num):
+    def synthesize_data(self, topic, persona, tone, length, id_num, is_challenge=False):
+        prompt_key = "challenge_synthesis" if is_challenge else "data_synthesis"
+        
         args = {
             "topic": topic, "persona": persona, "tone": tone, 
             "length": length, "id_num": id_num
         }
-        user_prompt = self.get_prompt("data_synthesis", "user", **args)
+        user_prompt = self.get_prompt(prompt_key, "user", **args)
         
         if not user_prompt:
-            return '{"error": "Prompt data_synthesis not found in yaml"}'
+            return f'{{"error": "Prompt {prompt_key} not found in yaml"}}'
 
         messages = [
             {"role": "system", "content": "You are a data generator. Output valid JSON only. Do not use Markdown formatting."},
@@ -131,12 +133,10 @@ if __name__ == "__main__":
         topic = random.choice(topics)
         persona = random.choice(personas)
         tone = random.choice(tones)
-        
-        if "short" in filename: length = "long (80-100 words)"
-        elif "long" in filename: length = "very short (10-20 words)"
-        else: length = random.choice(lengths)
+        length = random.choice(lengths)
+        is_challenge = (filename == "challenge.jsonl")
 
-        result = generator.synthesize_data(topic, persona, tone, length, i)
+        result = generator.synthesize_data(topic, persona, tone, length, i, is_challenge=is_challenge)
         clean_json = result.replace("```json", "").replace("```", "").strip()
         
         try:
@@ -166,5 +166,6 @@ if __name__ == "__main__":
         print(f"Saved to {filepath}")
 
     generate_file("mixed.jsonl", 50)
+    generate_file("challenge.jsonl", 50)
     
-    print("\n✅ Mixed file generated in 'datasets/' folder!")
+    print("\n✅ Mixed & Challenge files generated in 'datasets/' folder!")
