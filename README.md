@@ -1,6 +1,4 @@
-{ type: file fileName: README.md fullContent:
-
-Email Helper Bot 📧
+# Email Helper Bot 📧
 A streamlined AI-powered application designed to assist professionals in rewriting, optimizing, and evaluating emails. This tool allows users to shorten, lengthen, or change the tone of emails and provides a robust AI Evaluation System to score the results.
 
 🚀 Key Features
@@ -110,4 +108,4 @@ generate.py: Script to generate synthetic email datasets using Azure OpenAI.
 
 prompts.yaml: Configuration file containing system prompts for generation and evaluation metrics.
 
-datasets/: Directory storing .jsonl data files (Originals, Mixed, and Challenge). }
+datasets/: Directory storing .jsonl data files (Originals, Mixed, and Challenge).
