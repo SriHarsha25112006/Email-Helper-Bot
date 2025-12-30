@@ -1,63 +1,83 @@
-# AI.Accelerate Bootcamp — Starter Code
+# Email Helper Bot 📧
 
-This repository contains two Python files that students will use to start their bootcamp projects. Files are:
-- `datasets/`: Dataset directory for each of the three email-helper actions students are expected to support in their apps
-- `app.py`: Starter Streamlit app
+A streamlined AI-powered application designed to assist professionals in rewriting, optimizing, and evaluating emails. This tool allows users to shorten, lengthen, or change the tone of emails and provides a robust **AI Evaluation System** to score the results.
 
-Follow the instructions below to set up your environment, create a virtual environment, and install all required dependencies.
+## 🚀 Key Features
+
+* **AI Rewrite Actions**: Instantly shorten, lengthen, or apply specific tones (Professional, Diplomatic, Witty, etc.) to your drafts.
+* **Dynamic Data Generation**: A built-in generator (`generate.py`) that creates synthetic "Mixed Mail" datasets to test the app with fresh, random email scenarios.
+* **AI Judge & Metrics**: A sophisticated evaluation engine that scores your rewritten emails on four key metrics:
+    * **Faithfulness**: Does it keep the original meaning?
+    * **Completeness**: are key details preserved?
+    * **Robustness**: Is the structure logical and error-free?
+    * **Professionalism**: Is the tone appropriate for business?
+* **Dual Workspace**: Switch between working on pre-set "Original Datasets" and your own dynamically "Generated Mails".
 
 ---
 
-## Getting Started
+## 🛠️ Installation & Setup
 
-### **1. Clone the repository**
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/<your-repo-name>.git
-cd <your-repo-name>
-```
+git clone <your-repo-url>
+cd Email-Helper-Bot
+2. Create a Virtual Environment
+Windows:
 
-### **2. Create a Virtual Environment**
+Bash
 
-> Recommended: Python 3.9+
+python -m venv venv
+venv\Scripts\Activate.ps1
+macOS/Linux:
 
-A virtual environment keeps your project isolated from your system Python packages.
+Bash
 
-**macOS / Linux**
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+python3 -m venv venv
+source venv/bin/activate
+3. Install Dependencies
+Bash
 
-**Windows**
-```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-When activated, your terminal prompt should display (.venv).
-
-### **3. Install Required Dependencies**
-
-With the virtual environment activated, install the project dependencies:
-
-```bash
 pip install -r requirements.txt
-```
+4. Configure Environment
+Ensure you have a .env file in the root directory with your Azure OpenAI credentials:
 
-### **3a. Update Dependencies**
+Code snippet
 
-If you install new packages while working on the project:
+GENERATOR_DEPLOYMENT=gpt-4o-mini
+JUDGE_DEPLOYMENT=gpt-4.1
+AZURE_OPENAI_API_KEY=your_key_here
+AZURE_OPENAI_ENDPOINT=your_endpoint_here
+🚦 Usage Guide
+Step 1: Generate Fresh Data (Optional)
+To create a new batch of random "Mixed Mails" for testing:
 
-```bash
-pip install <package-name>
-pip freeze > requirements.txt
-```
-This regenerates requirements.txt so others can install the same environment.
+Bash
 
-### **4. Start the app**
-To run the app on Streamlit, run:
-```bash
+python generate.py
+This creates/updates datasets/mixed.jsonl with diverse email scenarios.
+
+Step 2: Run the App
+Bash
+
 streamlit run app.py
-```
-It will open a localhost on your browser. Use this to preview all the changes to your app during the bootcamp.
+Step 3: Using the Interface
+Select Source (Sidebar):
 
-Welcome to AI.Accelerate!
+Original Datasets: Choose specific task-based files (Short Mails, Long Mails, Tone Mails).
+
+Generated Mails: Select "Mixed Mails" to access the randomized dataset you generated in Step 1.
+
+Select an Email: Pick an ID from the dropdown to load an email.
+
+Edit & Rewrite: Use the text area to make changes, or click the Action Buttons (⚡ Shorten, 📝 Lengthen, 🎭 Apply Tone) to let AI do the work.
+
+Judge: Click ⚖️ Judge Email to run the 4-metric evaluation and see your scores.
+
+📂 Project Structure
+app.py: Main Streamlit application containing the UI and logic.
+
+generate.py: Script to generate synthetic email datasets using Azure OpenAI.
+
+prompts.yaml: Configuration file containing system prompts for generation and evaluation metrics.
+
+datasets/: Directory storing .jsonl data files (both original and generated).
