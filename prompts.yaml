@@ -57,6 +57,30 @@ completeness:
     Start your response with the score in bold.
     Format: "**Score: X/5** - [Explanation]"
 
+robustness:
+  user: |
+    You are an evaluator. Rate the ROBUSTNESS of the rewritten text.
+    Does the text maintain logical flow and structural integrity? 
+    Is it free from repetitive loops, formatting errors, or broken sentences?
+    
+    Rewritten Text:
+    {rewritten_text}
+    
+    Start your response with the score in bold.
+    Format: "**Score: X/5** - [Explanation]"
+
+professionalism:
+  user: |
+    You are an evaluator. Rate the PROFESSIONALISM of the rewritten text.
+    Is the tone appropriate for a formal business context? 
+    Does it avoid slang, overly casual language, or aggressive phrasing?
+    
+    Rewritten Text:
+    {rewritten_text}
+    
+    Start your response with the score in bold.
+    Format: "**Score: X/5** - [Explanation]"
+
 data_synthesis:
   user: |
     Write a professional email about {topic} written by {persona} in {tone}. The email should be {length}.

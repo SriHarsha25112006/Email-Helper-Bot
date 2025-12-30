@@ -1,12 +1,13 @@
 import streamlit as st
 import json
 import os
+import glob
+import concurrent.futures
 from dotenv import load_dotenv
 from generate import GenerateEmail
 
 load_dotenv()
 
-# ---------------- CONFIG ----------------
 st.set_page_config(page_title="Email Helper App", page_icon="📧", layout="wide")
 
 generator_bot = GenerateEmail(
@@ -14,80 +15,121 @@ generator_bot = GenerateEmail(
 )
 judge_bot = GenerateEmail(deployment_name=os.getenv("JUDGE_DEPLOYMENT", "gpt-4.1"))
 
+DATASET_DIR = "datasets"
 
-# ---------------- DATA LOADING ----------------
+# --- HELPER FUNCTIONS ---
 @st.cache_data
-def load_emails_from_jsonl(*file_names):
-    """
-    Loads emails from multiple JSONL files and merges them.
-    Re-assigns IDs to ensure uniqueness across files.
-    """
+def load_single_jsonl(file_name):
+    path = os.path.join(DATASET_DIR, file_name)
     data = []
     
-    for file_name in file_names:
-        paths = [file_name, f"datasets/{file_name}"]
-        path = next((p for p in paths if os.path.exists(p)), None)
-        
-        if path:
-            with open(path, "r", encoding="utf-8") as f:
-                for line in f:
-                    try:
-                        data.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        continue
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return data
 
-    if not data:
-        return {"emails": {}, "ids": []}
-
-    # Re-index emails to avoid ID collisions
+def get_emails_dict(file_name):
+    raw_data = load_single_jsonl(file_name)
     emails = {}
-    for idx, item in enumerate(data):
+    for idx, item in enumerate(raw_data):
         new_id = idx + 1
         item["id"] = new_id
         emails[new_id] = item
-        
     return {"emails": emails, "ids": list(emails.keys())}
 
-
-data_files = {
-    "shorten": load_emails_from_jsonl("shorten.jsonl", "short.jsonl"),
-    "lengthen": load_emails_from_jsonl("lengthen.jsonl", "long.jsonl"),
-    "tone": load_emails_from_jsonl("tone.jsonl", "toned.jsonl"),
-}
-
-# ---------------- SIDEBAR ----------------
+# ---------------- SIDEBAR CONFIGURATION ----------------
 st.sidebar.title("Configuration")
-action_map = {
-    "Short Emails": "shorten",
-    "Longer Emails": "lengthen",
-    "Toned Emails": "tone",
-}
-selected_label = st.sidebar.selectbox("1. Select Action", list(action_map.keys()))
-action = action_map[selected_label]
 
-email_ids = data_files[action]["ids"]
+source_category = st.sidebar.selectbox(
+    "Select Source",
+    ["Original Datasets", "Generated Mails"]
+)
 
-if not email_ids:
-    st.error(f"Error: No data found for '{action}'. Run generate.py first.")
+selected_filename = None
+
+if source_category == "Original Datasets":
+    st.sidebar.markdown("### 📂 Original Files")
+    
+    file_map = {
+        "Short Mails": "shorten.jsonl",
+        "Long Mails": "lengthen.jsonl",
+        "Tone Mails": "tone.jsonl"
+    }
+    
+    friendly_name = st.sidebar.selectbox("Select File", list(file_map.keys()))
+    selected_filename = file_map[friendly_name]
+
+elif source_category == "Generated Mails":
+    st.sidebar.markdown("### 🤖 Generated Mails")
+    
+    all_files = glob.glob(os.path.join(DATASET_DIR, "*.jsonl"))
+    all_filenames = [os.path.basename(f) for f in all_files]
+    
+    excluded_files = [
+        "shorten.jsonl", "lengthen.jsonl", "tone.jsonl", 
+        "short.jsonl", "long.jsonl", "toned.jsonl"
+    ]
+    
+    raw_generated_files = [f for f in all_filenames if f not in excluded_files]
+
+    if "mixed.jsonl" in all_filenames and "mixed.jsonl" not in raw_generated_files:
+        raw_generated_files.append("mixed.jsonl")
+
+    if not raw_generated_files:
+        st.sidebar.warning("No generated files found. Run generate.py.")
+    else:
+        display_map = {}
+        for f in raw_generated_files:
+            if f == "mixed.jsonl":
+                display_map["Mixed Mails"] = f
+            else:
+                display_map[f] = f
+        
+        selected_display_name = st.sidebar.selectbox("Select File", list(display_map.keys()))
+        selected_filename = display_map[selected_display_name]
+
+# ---------------- LOAD CONTENT ----------------
+if selected_filename:
+    dataset_info = get_emails_dict(selected_filename)
+    email_ids = dataset_info["ids"]
+
+    if not email_ids:
+        st.error(f"Error: No data found in '{selected_filename}'. Please check the file.")
+        st.stop()
+
+    email_id = st.sidebar.selectbox("Select Email ID", email_ids)
+    email = dataset_info["emails"][email_id]
+else:
+    st.info("👈 Please select a file to begin.")
     st.stop()
 
-email_id = st.sidebar.selectbox("2. Select Email ID", email_ids)
-email = data_files[action]["emails"][email_id]
+# ---------------- STATE MANAGEMENT ----------------
+state_id = f"{selected_filename}_{email_id}"
+body_key = f"body_{state_id}"
+orig_key = f"orig_{state_id}"
+metrics_key = f"metrics_{state_id}"
 
-# ---------------- SESSION STATE ----------------
-body_key = f"body_{action}_{email_id}"
-orig_key = f"orig_{action}_{email_id}"
-metrics_key = f"metrics_{action}_{email_id}"
+default_metrics = {
+    "faithfulness": None, 
+    "completeness": None, 
+    "robustness": None, 
+    "professionalism": None
+}
 
 if body_key not in st.session_state:
     st.session_state[body_key] = email.get("content", "")
 if orig_key not in st.session_state:
     st.session_state[orig_key] = email.get("content", "")
 if metrics_key not in st.session_state:
-    st.session_state[metrics_key] = {"faithfulness": None, "completeness": None}
+    st.session_state[metrics_key] = default_metrics.copy()
 
-# ---------------- UI LAYOUT ----------------
-st.markdown("### 📧 Email Details")
+# ---------------- MAIN UI ----------------
+st.markdown(f"### 📧 Email Details")
+st.caption(f"File: {selected_filename}")
 st.markdown(f"**From:** {email.get('sender', 'Unknown Sender')}")
 st.markdown(f"**Subject:** {email.get('subject', 'No Subject')}")
 st.markdown("---")
@@ -95,8 +137,7 @@ st.markdown("---")
 st.markdown("### ✏️ Email Body")
 st.text_area(label="Edit text below:", height=250, key=body_key)
 
-
-# ---------------- CALLBACKS ----------------
+# ---------------- LOGIC HANDLERS ----------------
 def run_ai(action_type, tone=None):
     current = st.session_state[body_key].strip()
     if not current:
@@ -110,10 +151,9 @@ def run_ai(action_type, tone=None):
 
     if not res.startswith("Error:"):
         st.session_state[body_key] = res
-        st.session_state[metrics_key] = {"faithfulness": None, "completeness": None}
+        st.session_state[metrics_key] = default_metrics.copy()
     else:
         st.error(res)
-
 
 def run_judge():
     original = st.session_state[orig_key].strip()
@@ -123,64 +163,57 @@ def run_judge():
         return
 
     if original == current:
-        msg = "You haven't modified the email."
-        st.session_state[metrics_key] = {"faithfulness": msg, "completeness": msg}
-        st.warning(msg)
-    else:
-        with st.spinner("Judging Metrics..."):
-            f_score = judge_bot.evaluate("faithfulness", original, current)
-            c_score = judge_bot.evaluate("completeness", original, current)
-            st.session_state[metrics_key] = {
-                "faithfulness": f_score,
-                "completeness": c_score,
-            }
+        st.warning("You haven't modified the email.")
+        return
 
+    metric_names = ["faithfulness", "completeness", "robustness", "professionalism"]
+    results = {}
+
+    with st.spinner("Judging Metrics (Parallel)..."):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            future_to_metric = {
+                executor.submit(judge_bot.evaluate, m, original, current): m 
+                for m in metric_names
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_metric):
+                metric_name = future_to_metric[future]
+                results[metric_name] = future.result()
+
+    st.session_state[metrics_key] = results
 
 def reset():
     st.session_state[body_key] = st.session_state[orig_key]
-    st.session_state[metrics_key] = {"faithfulness": None, "completeness": None}
+    st.session_state[metrics_key] = default_metrics.copy()
 
-
-# ---------------- BUTTONS SECTION ----------------
+# ---------------- ACTION BUTTONS ----------------
 st.markdown("### ✨ Actions")
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.button(
-        "⚡ Shorten", on_click=run_ai, args=("shorten",), use_container_width=True
-    )
+    st.button("⚡ Shorten", on_click=run_ai, args=("shorten",), use_container_width=True)
 with c2:
-    st.button(
-        "📝 Lengthen", on_click=run_ai, args=("lengthen",), use_container_width=True
-    )
+    st.button("📝 Lengthen", on_click=run_ai, args=("lengthen",), use_container_width=True)
 with c3:
-    t = st.selectbox(
-        "Tone",
-        ["Friendly", "Sympathetic", "Professional"],
-        label_visibility="collapsed",
-    )
-    st.button(
-        "🎭 Apply Tone", on_click=run_ai, args=("tone", t), use_container_width=True
-    )
+    t = st.selectbox("Tone", ["Friendly", "Sympathetic", "Professional", "Diplomatic", "Witty"], label_visibility="collapsed")
+    st.button("🎭 Apply Tone", on_click=run_ai, args=("tone", t), use_container_width=True)
 
 st.markdown("")
 
-if st.button(
-    "⚖️ Judge Email", on_click=run_judge, use_container_width=True, type="primary"
-):
+if st.button("⚖️ Judge Email", on_click=run_judge, use_container_width=True, type="primary"):
     pass
 
 # ---------------- METRICS DISPLAY ----------------
 metrics = st.session_state[metrics_key]
-if metrics["faithfulness"] or metrics["completeness"]:
-    st.markdown("#### ⚖️ Judge Metrics")
-    m1, m2 = st.columns(2)
-    with m1:
-        st.info(f"{metrics['faithfulness']}")
-    with m2:
-        st.info(f"{metrics['completeness']}")
 
-# ---------------- RESET SECTION ----------------
+if any(metrics.values()):
+    st.markdown("#### ⚖️ Judge Metrics")
+    m1, m2, m3, m4 = st.columns(4)
+    with m1: st.info(f"**Faithfulness**\n\n{metrics['faithfulness']}")
+    with m2: st.info(f"**Completeness**\n\n{metrics['completeness']}")
+    with m3: st.info(f"**Robustness**\n\n{metrics['robustness']}")
+    with m4: st.info(f"**Professionalism**\n\n{metrics['professionalism']}")
+
 st.divider()
 if st.button("🔄 Reset to Original Content", on_click=reset):
     st.toast("Restored!")
