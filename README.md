@@ -1,41 +1,80 @@
-# Email Helper Bot 📧
-A streamlined AI-powered application designed to assist professionals in rewriting, optimizing, and evaluating emails. This tool allows users to shorten, lengthen, or change the tone of emails and provides a robust AI Evaluation System to score the results.
+# 📧 Email Helper Bot
 
-🚀 Key Features
-AI Rewrite Actions: Instantly shorten, lengthen, or apply specific tones (Professional, Diplomatic, Witty, etc.) to your drafts.
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io)
+[![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://azure.microsoft.com)
+[![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)]()
 
-Dynamic Data Generation: A built-in generator (generate.py) that creates synthetic datasets:
+**A streamlined AI-powered workbench for professionals to rewrite, optimize, and evaluate emails.** This tool goes beyond simple text generation. It features a **Dual Workspace** for testing against both static and dynamically generated datasets, and includes a rigorous **AI Evaluation System** to score quality and detect enterprise-level defects.
 
-Mixed Mails: Randomized email scenarios to test general performance.
+---
 
-Challenge Mails: Specialized datasets to test for specific defects (e.g., preserving URLs).
+## 📖 Table of Contents
+- [🚀 Key Features](#-key-features)
+- [🧠 AI Judge & Metrics](#-ai-judge--metrics)
+- [🏆 Enterprise Challenge Scenarios](#-enterprise-challenge-scenarios)
+- [🛠️ Installation & Setup](#-installation--setup)
+- [🚦 Usage Guide](#-usage-guide)
+- [📂 Project Structure](#-project-structure)
 
-AI Judge & Metrics: A sophisticated evaluation engine that scores your rewritten emails on 6 key metrics:
+---
 
-Faithfulness: Does it keep the original meaning?
+## 🚀 Key Features
 
-Completeness: Are key details preserved?
+| Feature | Description |
+| :--- | :--- |
+| **⚡ AI Rewrite Actions** | Instantly **Shorten**, **Lengthen**, or apply specific **Tones** (Professional, Diplomatic, Witty) to your drafts. |
+| **🎲 Dynamic Data Engine** | Built-in synthetic data generator (`generate.py`) that creates fresh test cases on demand. |
+| **🧪 Dual Workspace** | Switch seamlessly between pre-set **"Original Datasets"** and your own dynamically **"Generated Mails"**. |
+| **⚖️ Robust Evaluation** | A sophisticated evaluation engine that scores your rewritten emails on **6 key metrics**. |
 
-Robustness: Is the structure logical and error-free?
+### The Data Engine
+The generator creates two types of dynamic datasets:
+* **Mixed Mails:** Randomized email scenarios to test general performance.
+* **Challenge Mails:** Specialized datasets designed to break the model (e.g., testing for URL preservation).
 
-Professionalism: Is the tone appropriate for business?
+---
 
-URL Preservation (Enterprise Defect): Checks if links are broken or missing.
+## 🧠 AI Judge & Metrics
 
-Scope Accuracy (Enterprise Defect): Checks if the AI rewrote only the intended scope without hallucinations.
+We don't just guess if the email is good; we measure it. The AI Judge scores every rewrite on a **1-5 scale** across these dimensions:
 
-Dual Workspace: Switch between working on pre-set "Original Datasets" and your own dynamically "Generated Mails".
+### 📊 General Quality
+* **Faithfulness:** Does it keep the original meaning?
+* **Completeness:** Are key details preserved?
+* **Robustness:** Is the structure logical and error-free?
+* **Professionalism:** Is the tone appropriate for business?
 
-🛠️ Installation & Setup
-1. Clone the Repository
-Bash
+### 🛡️ Enterprise Defect Detection
+* **URL Preservation:** *Strict Check.* Did the AI break or strip any links?
+* **Scope Accuracy:** *Hallucination Check.* Did the AI rewrite only the intended scope without adding fake info?
 
+---
+
+## 🏆 Enterprise Challenge Scenarios
+
+This project explicitly addresses real-world defects often found in LLM applications:
+
+> **🚩 Scenario 1: The Broken Link**
+> * **Problem:** Language models often strip or break URLs when rewriting text.
+> * **Solution:** The `challenge.jsonl` dataset generates emails with specific URLs. The **URL Preservation** metric strictly checks if every link in the original text exists in the rewrite.
+
+> **🚩 Scenario 2: Scope Creep**
+> * **Problem:** Models often hallucinate new topics or rewrite an entire email when only a specific section was targeted.
+> * **Solution:** The **Scope Accuracy** metric evaluates if the rewrite stays within the logical boundaries of the original request.
+
+---
+
+## 🛠️ Installation & Setup
+
+### 1. Clone the Repository
+```bash
 git clone <your-repo-url>
 cd Email-Helper-Bot
 2. Create a Virtual Environment
 Windows:
 
-Bash
+PowerShell
 
 python -m venv venv
 venv\Scripts\Activate.ps1
@@ -50,62 +89,48 @@ Bash
 
 pip install -r requirements.txt
 4. Configure Environment
-Ensure you have a .env file in the root directory with your Azure OpenAI credentials:
+Create a .env file in the root directory with your Azure credentials:
 
-Code snippet
+Ini, TOML
 
 GENERATOR_DEPLOYMENT=gpt-4o-mini
 JUDGE_DEPLOYMENT=gpt-4.1
 AZURE_OPENAI_API_KEY=your_key_here
 AZURE_OPENAI_ENDPOINT=your_endpoint_here
 🚦 Usage Guide
-Step 1: Generate Fresh Data
-To create new batches of "Mixed Mails" and "Challenge Mails" for testing:
+Step 1: Generate Fresh Data 🎲
+Before running the app, generate your synthetic test data.
 
 Bash
 
 python generate.py
-This creates/updates datasets/mixed.jsonl and datasets/challenge.jsonl.
+Output: Updates datasets/mixed.jsonl and datasets/challenge.jsonl with fresh scenarios.
 
-Step 2: Run the App
+Step 2: Run the App 🏃‍♂️
 Bash
 
 streamlit run app.py
-Step 3: Using the Interface
+Step 3: Using the Interface 🖥️
 Select Source (Sidebar):
 
-Original Datasets: Choose specific task-based files (Short Mails, Long Mails, Tone Mails).
+Original Datasets: Specific task-based files (Short/Long/Tone Mails).
 
-Generated Mails: Select "Mixed Mails" for general testing or "⚠️ Challenge (URLs)" to test specific defect scenarios.
+Generated Mails: Select "Mixed Mails" for general testing or "⚠️ Challenge (URLs)" for defect testing.
 
-Select an Email: Pick an ID from the dropdown to load an email.
+Select an Email: Pick an ID to load content.
 
-Edit & Rewrite: Use the text area to make changes, or click the Action Buttons (⚡ Shorten, 📝 Lengthen, 🎭 Apply Tone) to let AI do the work.
+Edit & Rewrite: Use the Action Buttons (⚡ Shorten, 📝 Lengthen, 🎭 Apply Tone).
 
 Judge: Click ⚖️ Judge Email to run the 6-metric evaluation.
 
-Look for the Enterprise Challenge Metrics section to see if your model passed the defect checks (URL Preservation & Scope Accuracy).
-
-🏆 Enterprise Challenge Scenarios
-This project explicitly addresses real-world enterprise defects:
-
-Scenario 1: URL Preservation
-
-Problem: Language models often strip or break URLs when rewriting text.
-
-Solution: The challenge.jsonl dataset generates emails with specific URLs. The URL Preservation metric strictly checks if every link in the original text exists in the rewrite.
-
-Scenario 2: Scope Accuracy
-
-Problem: "Scope Creep" occurs when a model hallucinates new topics or rewrites the entire email when only a specific section was targeted.
-
-Solution: The Scope Accuracy metric evaluates if the rewrite stays within the logical boundaries of the original request.
-
 📂 Project Structure
-app.py: Main Streamlit application containing the UI and logic.
+Plaintext
 
-generate.py: Script to generate synthetic email datasets using Azure OpenAI.
-
-prompts.yaml: Configuration file containing system prompts for generation and evaluation metrics.
-
-datasets/: Directory storing .jsonl data files (Originals, Mixed, and Challenge).
+Email-Helper-Bot/
+├── 📂 datasets/          # Stores .jsonl data files (Originals, Mixed, Challenge)
+├── 🐍 app.py             # Main Streamlit application UI and logic
+├── 🐍 generate.py        # Script to generate synthetic datasets via Azure OpenAI
+├── ⚙️ prompts.yaml       # System prompts for generation and evaluation metrics
+├── 📄 requirements.txt   # Project dependencies
+├── 📄 .env               # API keys (not committed)
+└── 📄 README.md          # Documentation
