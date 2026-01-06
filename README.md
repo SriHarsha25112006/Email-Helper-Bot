@@ -124,7 +124,7 @@ Generated Mails: Select "Mixed Mails" for general testing, "Challenge (URLs)" fo
 4. Judge: Click ⚖️ Judge Email to run the 5-metric evaluation.
 
 ### 📂 Project Structure
-
+```bash
 Email-Helper-Bot/
 ├── 📂 datasets/          # Stores .jsonl data files
 ├── 🐍 app.py             # Main Streamlit application UI and logic
@@ -134,3 +134,4 @@ Email-Helper-Bot/
 ├── 📄 requirements.txt   # Project dependencies
 ├── 📄 .env               # API keys (not committed)
 └── 📄 README.md          # Documentation
+```
