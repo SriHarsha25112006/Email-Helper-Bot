@@ -3,6 +3,7 @@ import yaml
 import json
 import random
 import re
+import time
 import concurrent.futures
 from dotenv import load_dotenv
 from openai import AzureOpenAI
@@ -27,15 +28,23 @@ class GenerateEmail:
         self.model = deployment_name
 
     def _call_api(self, messages):
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=0.3,
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            return f"Error: {str(e)}"
+        # Added Retry Logic to prevent Rate Limit (429) Crashes
+        retries = 3
+        for attempt in range(retries):
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=0.3,
+                )
+                return response.choices[0].message.content.strip()
+            except Exception as e:
+                if "429" in str(e) and attempt < retries - 1:
+                    wait_time = (attempt + 1) * 2  # Wait 2s, 4s, 6s...
+                    print(f"⚠️ Rate limit hit. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                return f"Error: {str(e)}"
 
     def get_prompt(self, action, role, **kwargs):
         template = prompts.get(action, {}).get(role)
@@ -83,7 +92,7 @@ class GenerateEmail:
 
     def evaluate(self, metric: str, original_text: str, rewritten_text: str) -> str:
         args = {"original_text": original_text, "rewritten_text": rewritten_text}
-        system_prompt = "You are an AI quality judge. Evaluate the text objectively."
+        system_prompt = "You are an AI quality judge. Evaluate the text objectively with decimal precision."
         user_prompt = self.get_prompt(metric, "user", **args)
         
         if not user_prompt:
@@ -95,8 +104,14 @@ class GenerateEmail:
         ]
         return self._call_api(messages)
 
-    def synthesize_data(self, topic, persona, tone, length, id_num, is_challenge=False):
-        prompt_key = "challenge_synthesis" if is_challenge else "data_synthesis"
+    def synthesize_data(self, topic, persona, tone, length, id_num, mode="standard"):
+        # Select prompt based on mode
+        if mode == "challenge":
+            prompt_key = "challenge_synthesis"
+        elif mode == "adversarial":
+            prompt_key = "adversarial_synthesis"
+        else:
+            prompt_key = "data_synthesis"
         
         args = {
             "topic": topic, "persona": persona, "tone": tone, 
@@ -134,9 +149,16 @@ if __name__ == "__main__":
         persona = random.choice(personas)
         tone = random.choice(tones)
         length = random.choice(lengths)
-        is_challenge = (filename == "challenge.jsonl")
+        
+        # Determine mode based on filename
+        if filename == "challenge.jsonl":
+            mode = "challenge"
+        elif filename == "adversarial.jsonl":
+            mode = "adversarial"
+        else:
+            mode = "standard"
 
-        result = generator.synthesize_data(topic, persona, tone, length, i, is_challenge=is_challenge)
+        result = generator.synthesize_data(topic, persona, tone, length, i, mode=mode)
         clean_json = result.replace("```json", "").replace("```", "").strip()
         
         try:
@@ -165,7 +187,8 @@ if __name__ == "__main__":
                 f.write(line + "\n")
         print(f"Saved to {filepath}")
 
-    generate_file("mixed.jsonl", 50)
-    generate_file("challenge.jsonl", 50)
+    generate_file("mixed.jsonl", 30)
+    generate_file("challenge.jsonl", 30)
+    generate_file("adversarial.jsonl", 30)
     
-    print("\n✅ Mixed & Challenge files generated in 'datasets/' folder!")
+    print("\n✅ All datasets generated in 'datasets/' folder!")

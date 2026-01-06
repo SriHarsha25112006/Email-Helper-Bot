@@ -43,11 +43,10 @@ We don't just guess if the email is good; we measure it. The AI Judge scores eve
 * **Faithfulness:** Does it keep the original meaning?
 * **Completeness:** Are key details preserved?
 * **Robustness:** Is the structure logical and error-free?
-* **Professionalism:** Is the tone appropriate for business?
 
 ### 🛡️ Enterprise Defect Detection
 * **URL Preservation:** *Strict Check.* Did the AI break or strip any links?
-* **Scope Accuracy:** *Hallucination Check.* Did the AI rewrite only the intended scope without adding fake info?
+* **Edge Case Stability:** *Logic Check.* Did the AI rewrite only the intended scope without logic breaks?
 
 ---
 
@@ -61,7 +60,11 @@ This project explicitly addresses real-world defects often found in LLM applicat
 
 > **🚩 Scenario 2: Scope Creep**
 > * **Problem:** Models often hallucinate new topics or rewrite an entire email when only a specific section was targeted.
-> * **Solution:** The **Scope Accuracy** metric evaluates if the rewrite stays within the logical boundaries of the original request.
+> * **Solution:** The **Edge Case Stability** metric evaluates if the rewrite stays within the logical boundaries of the original request.
+
+> **🚩 Scenario 3: The Confused Comedian**
+> * **Problem:** Models asked to be "Witty" often copy user typos and "um/uh" fillers.
+> * **Solution:** Strict prompts enforce **Clarity First**, ensuring wit is polished, not sloppy.
 
 ---
 
@@ -111,25 +114,26 @@ Bash
 
 streamlit run app.py
 Step 3: Using the Interface 🖥️
-Select Source (Sidebar):
+1. Select Source (Sidebar):
 
 Original Datasets: Specific task-based files (Short/Long/Tone Mails).
 
-Generated Mails: Select "Mixed Mails" for general testing or "⚠️ Challenge (URLs)" for defect testing.
+Generated Mails: Select "Mixed Mails" for general testing, "Challenge (URLs)" for defect testing, or "Adversarial" for robust testing.
 
-Select an Email: Pick an ID to load content.
+2. Select an Email: Pick an ID to load content.
 
-Edit & Rewrite: Use the Action Buttons (⚡ Shorten, 📝 Lengthen, 🎭 Apply Tone).
+3. Edit & Rewrite: Use the Action Buttons (⚡ Shorten, 📝 Lengthen, 🎭 Apply Tone).
 
-Judge: Click ⚖️ Judge Email to run the 6-metric evaluation.
+4. Judge: Click ⚖️ Judge Email to run the 5-metric evaluation.
 
 📂 Project Structure
 Plaintext
 
 Email-Helper-Bot/
-├── 📂 datasets/          # Stores .jsonl data files (Originals, Mixed, Challenge)
+├── 📂 datasets/          # Stores .jsonl data files
 ├── 🐍 app.py             # Main Streamlit application UI and logic
 ├── 🐍 generate.py        # Script to generate synthetic datasets via Azure OpenAI
+├── 🐍 batch_runner.py    # Script to run comprehensive automated tests
 ├── ⚙️ prompts.yaml       # System prompts for generation and evaluation metrics
 ├── 📄 requirements.txt   # Project dependencies
 ├── 📄 .env               # API keys (not committed)

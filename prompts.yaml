@@ -3,10 +3,10 @@ shorten:
     Rewrite the following text to be more concise.
     
     CRITICAL RULES:
-    1. Preserve the core meaning.
-    2. Do not lose key details (dates, names, action items).
-    3. Simply remove fluff and redundancy.
-    4. If the text is already very short, just return it as is or make minor grammatical tightenings.
+    1. **PRESERVE MEANING:** Do not lose key details (dates, names, action items).
+    2. **AMBIGUITY SHIELD:** If the original text contains uncertain details (e.g., "next next Friday", "maybe 2 PM?"), **PRESERVE** that uncertainty. Do not "fix" or delete vague dates just to be concise.
+    3. **POLITENESS CHECK:** If the original text is urgent or strict (e.g., "fix this or else"), **soften the delivery** while shortening. Do not output abrupt, rude, or robotic commands.
+    4. **SAFETY CHECK:** If the text is already very short (<15 words), do not chop it further. Just ensure it is grammatically smooth.
     
     Original Text:
     {selected_text}
@@ -16,23 +16,53 @@ lengthen:
     Rewrite the following text to be more polite and professional, slightly expanding it for clarity.
     
     CRITICAL RULES:
-    1. Do NOT add specific facts (like project names, meetings, deadlines, or teams) that are not in the original text.
-    2. Do NOT invent scenarios or background stories.
-    3. You may add professional pleasantries (e.g., "I hope this finds you well", "Thank you for your patience") but nothing else.
-    4. Keep the expansion reasonable (max 20-30% longer than original). Do not turn 1 sentence into a paragraph.
+    1. **NO HALLUCINATION:** Do NOT add specific facts (project names, meetings, deadlines) that are not in the original text.
+    2. **TONE PRESERVATION:** You may add pleasantries, but **maintain the original intent's severity.** If the original is a strict warning, keep it a strict warning (phrased professionally). Do not soften a command into a "kind request" if the context forbids it.
+    3. **NO INTENSITY INFLATION:** Do not exaggerate. Do not change "a bug" to "a critical crisis." Do not change "fix this" to "we eagerly await your prompt resolution." Keep the urgency level accurate.
+    4. Keep the expansion reasonable (max 20-30% longer).
+    5. **LINK INVIOLABILITY:** If the original text contains a URL (http/https), you **MUST** include it **EXACTLY** as shown. 
+       - Do NOT hide it behind text (e.g., do NOT write "Click here"). 
+       - Do NOT change the link. 
+       - Keep the raw URL visible in the text.
     
     Original Text:
     {selected_text}
 
 tone:
   user: |
-    Rewrite the following paragraph in a {tone_type} tone while keeping the same meaning:
+    Rewrite the following paragraph in a {tone_type} tone while keeping the same meaning.
+    
+    RULES:
+    1. **CONTENT PRESERVATION (PRIORITY #1):** Your primary goal is to convey the *original message*. Do not drop questions, requests, or reasons just to match a tone.
+    2. **DATA ANCHOR:** You are **FORBIDDEN** from removing specific dates, times, or names. 
+       - If the text says "next next Friday", WRITE "next next Friday". 
+       - Do not "clean up" confusing dates. Copy them exactly.
+    3. **CLARITY FIRST:** If the original text is rambling, confused, or full of fillers ("um", "maybe?", "who knows"), **CLEAN IT UP** grammatically. 
+    4. **EMOTIONAL CONSTRAINT:** Do not assume the recipient's state of mind (e.g., do not write "I know you are frustrated") unless the original text explicitly mentions it.
+    5. **SEMANTIC SAFETY:** Be witty/diplomatic with *phrasing*, not *facts*. Do not change "negative consequences" to "delightful aftermath."
+    6. **IMPERATIVE PRESERVATION:** If the original text contains a COMMAND ("Fix this") or a WARNING ("or else"), you **MUST** include it in your rewrite.
+    7. **POLISHED WIT:** If choosing a Witty/Casual tone, **DO NOT STAMMER**. Remove "um", "uh", "like".
+    8. **TECHNICAL PRECISION:** If the email is a Bug Report or contains technical IDs (Jira-123, Error 500), **DO NOT** joke about the data. NEVER delete the Link or Error Code.
+    9. **ACTION RETENTION:** If the user asks to "reschedule," "cancel," or "meet," you **MUST** use a synonym of that verb. Do not replace "Can we reschedule?" with "My calendar is sad." (Too abstract). Keep the request clear.
+    
+    Original Text:
     {selected_text}
 
 faithfulness:
   user: |
-    You are an evaluator. Rate the FAITHFULNESS of the rewritten text to the original text.
-    Does the rewritten text introduce any false information or hallucinations?
+    You are a Harsh QA Auditor. Rate the FAITHFULNESS of the rewritten text to the original.
+    
+    SCORING RULES:
+    1. **Scale:** 0.00 to 5.00 (Use 2 decimal precision, e.g., 3.75, 4.20).
+    2. **Base Score:** Start at 5.00.
+    3. **TONE EXCEPTION (CRITICAL):** If the user requested a specific Tone (e.g., Witty, Professional), **DO NOT PENALIZE** colorful adjectives unless they change the facts.
+       - Changing "good work" to "dazzling work" (Witty) is **ACCEPTABLE**. (No deduction).
+       - Changing "bad result" to "delightful result" (Sarcasm) is **UNACCEPTABLE** (Meaning Shift).
+    
+    4. **Deductions:**
+        - Deduct 0.50 for every minor detail lost.
+        - Deduct 1.50 for any ACTUAL meaning shift (changing yes to no, bad to good).
+        - Deduct 2.00 for any added factual information (hallucination).
     
     Original Text:
     {original_text}
@@ -41,12 +71,19 @@ faithfulness:
     {rewritten_text}
     
     Start your response with the score in bold.
-    Format: "**Score: X/5** - [Explanation]"
+    Format: "**Score: X.XX/5** - [Critical Explanation of deductions]"
 
 completeness:
   user: |
-    You are an evaluator. Rate the COMPLETENESS of the rewritten text compared to the original.
-    Does the rewritten text miss key information present in the original?
+    You are a Strict Data Validator. Rate COMPLETENESS (0.00 - 5.00).
+    Did the rewrite miss ANY key information **THAT WAS PRESENT IN THE ORIGINAL TEXT**?
+    
+    SCORING RULES:
+    1. **RELATIVITY CHECK:** If the *Original Text* does not have a date, name, or link, **DO NOT PENALIZE** the rewrite for missing it.
+    2. Only deduct points if a specific fact from the Original was dropped in the Rewrite.
+    
+    * If a date present in Original is missing in Rewrite: -2.00 points.
+    * If a name/link present in Original is missing in Rewrite: -1.50 points.
     
     Original Text:
     {original_text}
@@ -55,31 +92,25 @@ completeness:
     {rewritten_text}
     
     Start your response with the score in bold.
-    Format: "**Score: X/5** - [Explanation]"
+    Format: "**Score: X.XX/5** - [List missing elements]"
 
 robustness:
   user: |
-    You are an evaluator. Rate the ROBUSTNESS of the rewritten text.
-    Does the text maintain logical flow and structural integrity? 
-    Is it free from repetitive loops, formatting errors, or broken sentences?
+    You are a Linguistics Professor. Rate ROBUSTNESS (0.00 - 5.00).
+    Check for:
+    1. **Grammar/Syntax:** Are there typos or broken sentences?
+    2. **Flow:** Is the text awkward, robotic, or overly repetitive?
+    3. **Cleanliness:** Did the model copy "um", "uh", or typos from the original? (It should have fixed them).
+    
+    **DATA EXCEPTION:** Do **NOT** penalize awkward phrases if they seem to be specific quoted data points (like "next next Friday" or "Error 500"). If the awkwardness comes from a Fact/Date, ignore it. If it comes from bad grammar ("um, like"), penalize it.
+    
+    Be unforgiving on grammar, but forgiving on data.
     
     Rewritten Text:
     {rewritten_text}
     
     Start your response with the score in bold.
-    Format: "**Score: X/5** - [Explanation]"
-
-professionalism:
-  user: |
-    You are an evaluator. Rate the PROFESSIONALISM of the rewritten text.
-    Is the tone appropriate for a formal business context? 
-    Does it avoid slang, overly casual language, or aggressive phrasing?
-    
-    Rewritten Text:
-    {rewritten_text}
-    
-    Start your response with the score in bold.
-    Format: "**Score: X/5** - [Explanation]"
+    Format: "**Score: X.XX/5** - [Critique]"
 
 url_preservation:
   user: |
@@ -92,17 +123,20 @@ url_preservation:
     Rewritten Text:
     {rewritten_text}
     
-    If ALL URLs are preserved exactly, give 5/5.
-    If ANY URL is missing or broken, give 1/5.
+    If ALL URLs are preserved exactly, give 5.00/5.
+    If ANY URL is missing or broken, give 1.00/5.
     
     Start your response with the score in bold.
-    Format: "**Score: X/5** - [Explanation]"
+    Format: "**Score: X.XX/5** - [Explanation]"
 
-scope_accuracy:
+edge_case_scan:
   user: |
-    You are an evaluator checking for "Scope Creep".
-    Did the rewritten text change the ENTIRE email when it should have only focused on a specific part?
-    (For this evaluation, assume the user wanted the whole text rewritten, but check if the model unnecessarily hallucinated new topics).
+    You are a Red Team Security Analyst. Analyze the text for LOGICAL FAILURES and EDGE CASES.
+    
+    Look for:
+    1. **Scope Creep:** Did it invent NEW TOPICS or TASKS? (Note: Rewriting the *style* or *phrasing* of the entire email is ACCEPTABLE. Adding new *meetings* or *projects* is NOT).
+    2. **Context Loss:** Did "tomorrow" become a specific wrong date?
+    3. **Entity Swap:** Did it swap names (Sender vs Receiver)?
     
     Original Text:
     {original_text}
@@ -110,8 +144,8 @@ scope_accuracy:
     Rewritten Text:
     {rewritten_text}
     
-    Start your response with the score in bold.
-    Format: "**Score: X/5** - [Explanation]"
+    Rate the **Stability** of the model (5.00 = Perfect, 0.00 = Broken Logic).
+    Format: "**Score: X.XX/5** - [Identify the Edge Case Failure]"
 
 data_synthesis:
   user: |
@@ -125,3 +159,12 @@ challenge_synthesis:
     The email should be {length}.
     Only Output a JSON in the following format:
     {{"id": {id_num}, "subject": "<short subject description>", "content": "<content of email>"}}
+
+adversarial_synthesis:
+  user: |
+    Write a CONFUSING or POORLY FORMATTED email about {topic}. 
+    Include typos, ambiguous dates (e.g., "next next Friday"), and mixed tones.
+    The goal is to trip up an AI trying to rewrite it.
+    
+    Output JSON only:
+    {{"id": {id_num}, "subject": "<subject>", "content": "<confusing content>"}}
