@@ -74,45 +74,42 @@ This project explicitly addresses real-world defects often found in LLM applicat
 ```bash
 git clone <your-repo-url>
 cd Email-Helper-Bot
+```
 ### 2. Create a Virtual Environment
 Windows:
-
-PowerShell
-
+```bash
 python -m venv venv
 venv\Scripts\Activate.ps1
+```
 macOS/Linux:
-
-Bash
-
+```bash
 python3 -m venv venv
 source venv/bin/activate
+```
 ### 3. Install Dependencies
-Bash
-
+```bash
 pip install -r requirements.txt
+```
 ### 4. Configure Environment
 Create a .env file in the root directory with your Azure credentials:
-
-Ini, TOML
-
+```bash
 GENERATOR_DEPLOYMENT=gpt-4o-mini
 JUDGE_DEPLOYMENT=gpt-4.1
 AZURE_OPENAI_API_KEY=your_key_here
 AZURE_OPENAI_ENDPOINT=your_endpoint_here
+```
 ### 🚦 Usage Guide
 ## Step 1: Generate Fresh Data 🎲
 Before running the app, generate your synthetic test data.
-
-Bash
-
+```bash
 python generate.py
+```
 Output: Updates datasets/mixed.jsonl and datasets/challenge.jsonl with fresh scenarios.
 
 ## Step 2: Run the App 🏃‍♂️
-Bash
-
+```bash
 streamlit run app.py
+```
 ## Step 3: Using the Interface 🖥️
 1. Select Source (Sidebar):
 
