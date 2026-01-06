@@ -74,7 +74,7 @@ This project explicitly addresses real-world defects often found in LLM applicat
 ```bash
 git clone <your-repo-url>
 cd Email-Helper-Bot
-2. Create a Virtual Environment
+### 2. Create a Virtual Environment
 Windows:
 
 PowerShell
@@ -87,11 +87,11 @@ Bash
 
 python3 -m venv venv
 source venv/bin/activate
-3. Install Dependencies
+### 3. Install Dependencies
 Bash
 
 pip install -r requirements.txt
-4. Configure Environment
+### 4. Configure Environment
 Create a .env file in the root directory with your Azure credentials:
 
 Ini, TOML
@@ -100,8 +100,8 @@ GENERATOR_DEPLOYMENT=gpt-4o-mini
 JUDGE_DEPLOYMENT=gpt-4.1
 AZURE_OPENAI_API_KEY=your_key_here
 AZURE_OPENAI_ENDPOINT=your_endpoint_here
-🚦 Usage Guide
-Step 1: Generate Fresh Data 🎲
+### 🚦 Usage Guide
+## Step 1: Generate Fresh Data 🎲
 Before running the app, generate your synthetic test data.
 
 Bash
@@ -109,11 +109,11 @@ Bash
 python generate.py
 Output: Updates datasets/mixed.jsonl and datasets/challenge.jsonl with fresh scenarios.
 
-Step 2: Run the App 🏃‍♂️
+## Step 2: Run the App 🏃‍♂️
 Bash
 
 streamlit run app.py
-Step 3: Using the Interface 🖥️
+## Step 3: Using the Interface 🖥️
 1. Select Source (Sidebar):
 
 Original Datasets: Specific task-based files (Short/Long/Tone Mails).
@@ -126,8 +126,7 @@ Generated Mails: Select "Mixed Mails" for general testing, "Challenge (URLs)" fo
 
 4. Judge: Click ⚖️ Judge Email to run the 5-metric evaluation.
 
-📂 Project Structure
-Plaintext
+### 📂 Project Structure
 
 Email-Helper-Bot/
 ├── 📂 datasets/          # Stores .jsonl data files
