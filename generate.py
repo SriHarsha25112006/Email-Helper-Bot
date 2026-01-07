@@ -130,6 +130,7 @@ class GenerateEmail:
 
 if __name__ == "__main__":
     print("Initializing Data Generator...")
+    # Instantiate the class properly
     generator = GenerateEmail(deployment_name=os.getenv("GENERATOR_DEPLOYMENT", "gpt-4o-mini"))
 
     personas = ["strict project manager", "enthusiastic intern", "confused client", "apologetic support agent"]
@@ -150,7 +151,7 @@ if __name__ == "__main__":
         tone = random.choice(tones)
         length = random.choice(lengths)
         
-        # Determine mode based on filename
+        # Determine mode based on filename to hit the correct prompt
         if filename == "challenge.jsonl":
             mode = "challenge"
         elif filename == "adversarial.jsonl":
@@ -187,6 +188,7 @@ if __name__ == "__main__":
                 f.write(line + "\n")
         print(f"Saved to {filepath}")
 
+    # Generate the 3 key files expected by app.py
     generate_file("mixed.jsonl", 30)
     generate_file("challenge.jsonl", 30)
     generate_file("adversarial.jsonl", 30)
