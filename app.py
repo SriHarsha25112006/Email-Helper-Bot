@@ -67,7 +67,7 @@ elif source_category == "Generated Mails":
     all_files = glob.glob(os.path.join(DATASET_DIR, "*.jsonl"))
     all_filenames = [os.path.basename(f) for f in all_files]
     
-    # Logic to find generated files
+    # Logic to filter out the original static files
     excluded_files = [
         "shorten.jsonl", "lengthen.jsonl", "tone.jsonl", 
         "short.jsonl", "long.jsonl", "toned.jsonl"
@@ -75,6 +75,7 @@ elif source_category == "Generated Mails":
     
     raw_generated_files = [f for f in all_filenames if f not in excluded_files]
 
+    # Explicitly ensure our 3 key generated files are in the list if they exist on disk
     for req_file in ["mixed.jsonl", "challenge.jsonl", "adversarial.jsonl"]:
         if req_file in all_filenames and req_file not in raw_generated_files:
             raw_generated_files.append(req_file)
@@ -82,7 +83,20 @@ elif source_category == "Generated Mails":
     if not raw_generated_files:
         st.sidebar.warning("No generated files found. Run generate.py.")
     else:
-        selected_filename = st.sidebar.selectbox("Select File", raw_generated_files)
+        # Define a formatting function to make filenames look professional in the dropdown
+        def format_filename(filename):
+            mapping = {
+                "mixed.jsonl": "Mixed Mails (General)",
+                "challenge.jsonl": "Challenge Mails (URLs)",
+                "adversarial.jsonl": "Adversarial Mails (Edge Cases)"
+            }
+            return mapping.get(filename, filename)
+
+        selected_filename = st.sidebar.selectbox(
+            "Select File", 
+            raw_generated_files, 
+            format_func=format_filename
+        )
 
 # ---------------- LOAD CONTENT ----------------
 if selected_filename:
